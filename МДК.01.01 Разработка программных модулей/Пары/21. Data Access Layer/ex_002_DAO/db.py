@@ -1,5 +1,12 @@
-import pandas as pd
-from sqlalchemy import create_engine
+import psycopg
+
 
 def get_conn():
-    return create_engine('postgresql+psycopg2://postgres:123@localhost:5432/rpo_db')
+    # Прямое соединение с PostgreSQL через psycopg (v3)
+    return psycopg.connect(
+        host='localhost',
+        port=5432,
+        user='postgres',
+        password='123',
+        dbname='rpo_db'
+    )

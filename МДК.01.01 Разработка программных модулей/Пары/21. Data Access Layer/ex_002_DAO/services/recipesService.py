@@ -1,54 +1,61 @@
-import psycopg2
-import db
+import sys
+import os
+sys.path.append(os.path.abspath('C:/Users/Андрей/Desktop/РПО-git/RPO_base/МДК.01.01 Разработка программных модулей/Пары/21. Data Access Layer'))
+
+import ex_002_DAO.db as db
 
 class RecipeService:
     # Получение всех рецептов
-    def get_all(self):
-        conn = db.get_conn()
-        psycopg2.cursor.conn.cursor()
-        psycopg2.cursor.execute('SELECT * FROM recipes.recipes')
-        rows = psycopg2.cursor.fetchall()
-        psycopg2.cursor.close()
-        conn.close()
-        return rows
-    
+    @staticmethod
+    def get_all():
+        with db.get_conn() as conn:
+            with conn.cursor() as cursor:
+                cursor.execute('SELECT * FROM recipes.recipes')
+                return cursor.fetchall()
+
     # Добавление нового рецепта
-    def add(self, name, category, level, description):
-        conn = db.get_conn()
-        psycopg2.cursor.conn.cursor()
-        try:
-            category_id = psycopg2.cursor.execute('SELECT category_id FROM categories WHERE id = %s', (category)) # Получаем id категории, по её названию
+    @staticmethod
+    def add(name, category, level, description):
+        with db.get_conn() as conn:
+            with conn.cursor() as cursor:
+                try:
+                    cursor.execute('SELECT category_id FROM categories WHERE name = %s', (category,))
+                    category_id = cursor.fetchone()[0]
 
-            psycopg2.cursor.execute('INSERT INTO recipes.recipes VALUES(NULL, %s, %s, %s, %s)', (name, category_id, level, description)) # Добавляем новый рецепт
-            psycopg2.cursor.commit()
-        except:
-            psycopg2.cursor.rollback()
-            raise
-    
+                    cursor.execute('INSERT INTO recipes.recipes VALUES(DEFAULT, %s, %s, %s, %s)', (name, category_id, level, description))
+                    conn.commit()
+                except:
+                    conn.rollback()
+                    raise
+
     # Редактирование рецепта по id
-    def edit(self, id, name, category, level, description):
-        conn = db.get_conn()
-        psycopg2.cursor.conn.cursor()
-        try:
-            category_id = psycopg2.cursor.execute('SELECT category_id FROM categories WHERE id = %s', (category)) # Получаем id категории, по её названию
+    @staticmethod
+    def edit(id, name, category, level, description):
+        with db.get_conn() as conn:
+            with conn.cursor() as cursor:
+                try:
+                    cursor.execute('SELECT category_id FROM categories WHERE name = %s', (category,))
+                    category_id = cursor.fetchone()[0]
 
-            psycopg2.cursor.execute('UPDATE recipes.recipes SET name = %s, category_id = %s, level = %s, description = %s WHERE id = %s', (name, category_id, level, description, id)) # Редактируем рецепт по id
-            psycopg2.cursor.commit()
-        except:
-            psycopg2.cursor.rollback()
-            raise
-    
+                    cursor.execute('UPDATE recipes.recipes SET name = %s, category_id = %s, level = %s, description = %s WHERE id = %s', (name, category_id, level, description, id))
+                    conn.commit()
+                except:
+                    conn.rollback()
+                    raise
+
     # Удаление рецепта по id
-    def drop(self, id):
-        conn = db.get_conn()
-        psycopg2.cursor.conn.cursor()
-        try:
-            psycopg2.cursor.execute('DROP FROM recipes.recipes WHERE id = %s', (id)) # Удаляем рецепт по id
-            psycopg2.cursor.commit()
-        except:
-            psycopg2.cursor.rollback()
-            raise
-    
+    @staticmethod
+    def drop(id):
+        with db.get_conn() as conn:
+            with conn.cursor() as cursor:
+                try:
+                    cursor.execute('DELETE FROM recipes.recipes WHERE id = %s', (id,))
+                    conn.commit()
+                except:
+                    conn.rollback()
+                    raise
+
     # Получение рецепта по категории
-    def get_by_category(self, category):
+    @staticmethod
+    def get_by_category(category):
         pass

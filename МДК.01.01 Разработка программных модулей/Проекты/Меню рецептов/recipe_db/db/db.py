@@ -6,6 +6,6 @@ def get_conn():
                 host='localhost', 
                 port=5432,
                 user='postgres',
-                password='123',
-                database='postgres'
+                password='password',
+                database='db_name'
         )

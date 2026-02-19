@@ -149,7 +149,7 @@ class MainWindow(QWidget):
                                 category_name = 'Без категории'
                                 if data['category_id']:
                                         cat = CategoryService.get_by_id(data['category_id'])
-                                        category_name = cat[1] if cat else 'Без категории'
+                                        category_name = cat[0][1] if cat and len(cat) > 0 else 'Без категории'
 
                                 self.recipe_list.add_recipe(data['name'], category_name)
                                 QMessageBox.information(self, 'Успех', 'Рецепт добавлен!')

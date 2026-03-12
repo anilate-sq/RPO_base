@@ -25,7 +25,7 @@ DB_CONFIG = {
     'port': 5432,
     'database': 'library_db',
     'user': 'postgres',
-    'password': 'EndryuConverse141719'
+    'password': 'password'
 }
 
 from data_layer.db import Database

@@ -19,7 +19,7 @@ class Database:
         'port': 5432,
         'database': 'library_db',
         'user': 'postgres',
-        'password': 'EndryuConverse141719'
+        'password': 'password'
     }
 
     def __init__(self, config: Optional[Dict[str, any]] = None):

@@ -1,7 +1,7 @@
 '''
 Модуль для работы с данными
 Data Access Layer(DAL)
-Адаптировано под PostgreSQL + psycopg2
+Адаптировано под PostgreSQL через psycopg2
 '''
 
 import psycopg2
@@ -17,9 +17,9 @@ class Database:
     DEFAULT_CONFIG = {
         'host': 'localhost',
         'port': 5432,
-        'database': 'library',
+        'database': 'library_db',
         'user': 'postgres',
-        'password': 'password'
+        'password': 'EndryuConverse141719'
     }
 
     def __init__(self, config: Optional[Dict[str, any]] = None):
@@ -28,7 +28,7 @@ class Database:
         Args:
             config: Словарь с параметрами подключения
         '''
-        self.config = {**self.DEFAULT_CONFIG, **{config or {}}}
+        self.config = {**self.DEFAULT_CONFIG, **(config or {})}
         self.connection = None
     
     def connect(self):
@@ -100,7 +100,7 @@ class Database:
                 from books
                 where author like %s
                 order by title
-                ''', (f'%{author}%')
+                ''', (f'%{author}%',)
             )
             return cur.fetchall()
         
@@ -113,7 +113,7 @@ class Database:
                 from books
                 where title like %s
                 order by title
-                ''', (f'%{title}%')
+                ''', (f"%{title}%",)
             )
             return cur.fetchall()
         
@@ -143,7 +143,7 @@ class Database:
             self.connection.commit()
             return cur.fetchone()['id']
     
-    def update_book(self, book_id: int, title: str = None, year: int = None, genre: str = None, is_available: bool = None) -> bool:
+    def update_book(self, book_id: int, title: str = None, author: str = None, year: int = None, genre: str = None, is_available: bool = None) -> bool:
         # Обновление книги
         book = self.get_book_by_id(book_id)
         if not book:
@@ -169,7 +169,7 @@ class Database:
     def delete_book(self, book_id: int) -> bool:
         # Удаление книги
         with self.cursor() as cur:
-            cur.execute('delete from books where id = %s', (book_id))
+            cur.execute('delete from books where id = %s', (book_id, ))
             self.connection.commit()
             return cur.rowcount > 0
     
@@ -183,7 +183,7 @@ class Database:
         with self.cursor() as  cur:
             cur.execute('''
                             update books
-                            set is_available = %s, updated_date = current_timestamp
+                            set is_available = %s, updated_at = current_timestamp
                             where id = %s
                         ''', (new_status, book_id))
             self.connection.commit()
@@ -195,14 +195,14 @@ class Database:
             cur.execute(
                 '''
                 select
-                    coutn(*) as total,
-                    sum(case when is_avialable then 1 else 0 end) as avialable
+                    count(*) as total,
+                    sum(case when is_available then 1 else 0 end) as available
                 from books
                 ''')
             result = cur.fetchone()
             return {
                 'total': result['total'],
-                'unavailable': result['total'] - result['adailable']
+                'unavailable': result['total'] - result['available']
             }
     
     def get_genres(self) -> List[str]:

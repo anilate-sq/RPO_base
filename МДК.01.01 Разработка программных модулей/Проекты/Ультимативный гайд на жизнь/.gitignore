@@ -1,0 +1,5 @@
+*.env
+*.log
+.DB_Store
+/venv
+/env

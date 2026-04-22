@@ -5,7 +5,7 @@ from sqlalchemy import(
     Column, String, Integer, Float, Text, DateTime, Date,
     Boolean, ForeignKey, Enum, JSON, Index, CheckConstraint
 )
-from sqlalchemy.dialects.postgresql from ARRAY
+from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.orm import relationship, declarative_base
 from sqlalchemy.sql import func
 import enum
@@ -158,7 +158,7 @@ class Skill(Base):
     def __repr__(self):
         return f'<Skill {self.name}>'
     
-class UserSkills(Base):
+class UserSkill(Base):
     # Навыки пользователей
     __tablename__ = 'user_skills'
 
@@ -182,3 +182,183 @@ class UserSkills(Base):
 
     def __repr__(self):
         return f'<UserSkill {self.skill.name} - lvl {self.level}'
+    
+class Problem(Base):
+    # Проблемы случаются
+    __tablename__ = "problems"
+
+    # Колонки
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="cascade"), nullable=False, index=True)
+    title = Column(String(100), nullable=False)
+    description = Column(Text)
+    problem_type = Column(
+        Enum(ProblemType, values_callable=lambda x: [e.value for e in x]),
+        nullable=False,
+        default=ProblemType.регулярная,
+        index=True
+    )
+    status = Column(
+        Enum(ProblemStatus, values_callable=lambda x: [e.value for e in x]),
+        nullable=False,
+        default=ProblemStatus.активная,
+        index=True
+    )
+    priority = Column(Integer, nullable=False, default=5)
+    stress_impact = Column(Integer, default=10)
+    energy_impact = Column(Integer, default=-5)
+    balance_impact = Column(Float, default=0.0)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    resolved_at = Column(DateTime(timezone=True))
+
+    # Отношения
+    user = relationship("User", back_populates="problems")
+    action_options = relationship("ActionOption", back_populates="problem", cascade="all, delete-orphan")
+    history = relationship("UserProblemHistory", back_populates="problem", cascade="all, delete-orphan")
+    
+    __table_args__ = (
+        CheckConstraint("priority >= 1 AND priority <= 5", name="check_priority_range")
+    )
+
+    def __repr__(self):
+        return f"<Problem {self.title} [{self.status}]>"
+    
+class ActionOption(Base):
+    # Варианты действий для решения проблемы
+    __tablename__ = "actions_options"
+
+    # Колонки
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    problem_id = Column(Integer, ForeignKey("problems.id", ondelete="cascade"), nullable=False, index=True)
+    title = Column(String(100), nullable=False)
+    description = Column(Text)
+    stress_change = Column(Integer, default=0)
+    energy_change = Column(Integer, default=0)
+    xp_reward = Column(Integer, default=0)
+    success_chance = Column(Integer, default=100)
+    sort_order = Column(Integer, nullable=False, default=0)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    # Отношения
+    problem = relationship("Problem", back_populates="action_options")
+
+    __table_args__ = (
+        CheckConstraint("success_chance >= 0 AND success_chance <= 100", name="check_success_chance")
+    )
+
+    def __repr__(self):
+        return f'<ActionOption {self.title}>'
+    
+class UserProblemHistory(Base):
+    # История разрешенных проблем
+    __tablename__ = "user_problem_history"
+
+    # Колонки
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="cascade"), nullable=False, index=True)
+    problem_id = Column(Integer, ForeignKey("problems.id", ondelete="cascade", nullable=False, index=True))
+    action_id = Column(Integer, ForeignKey("actions_options.id", ondelete="restrict", nullable=False))
+    was_successful = Column(Boolean, nullable=False, default=True)
+    stress_change = Column(Integer)
+    energy_change = Column(Integer)
+    balance_change = Column(Integer)
+    xp_gained = Column(Integer)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    # Отношения
+    user = relationship("User", back_populates="problem_history")
+    problem = relationship("Problem", back_populates="history")
+    action = relationship("ActionOption")
+
+    def __repr__(self):
+        return f'<ProblemHistory {self.problem_id}>'
+    
+class GuideProgress(Base):
+    # Прогресс чтения гайда
+    __tablename__ = "guide_progress"
+
+    # Колонки
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="cascade"), nullable=False, index=True)
+    guide_id = Column(Integer, ForeignKey("guides.id", ondelete="cascade"), nullable=False, index=True)
+    status = Column(String(20), nullable=False, default="не начато", index=True)
+    progress_percent = Column(Integer, nullable=False, index=True)
+    start_at = Column(DateTime(timezone=True), server_default=func.now())
+    end_at = Column(DateTime(timezone=True))
+
+    # Отношения
+    user = relationship("User", back_populates="guide_progress")
+    guide = relationship("Guide", back_populates="progress")
+
+    __table_args__ = (
+        Index("ix_guide_progress_user_guide", "user_id", "guide_id", unique=True),
+        CheckConstraint("progress_percent >= 0 AND progress_percent <= 100", name="check_progress_percent")
+    )
+
+    def __repr__(self):
+        return f"<GuideProgress {self.guide_id} - {self.progress_percent}>"
+    
+class Achievement(Base):
+    # Достижения
+    __tablename__ = "achievements"
+
+    # Колонки
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    name = Column(String(100), nullable=False)
+    description = Column(Text, nullable=False)
+    icon = Column(String(50))
+    category = Column(String(50))
+    condition_json = Column(JSON, nullable=False)
+    xp_reward = Column(Integer, default=0)
+    skill_points = Column(JSON)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    # Отношения
+    user_achievements = relationship("UserAchievement", back_populates="achievements", cascade="all, delete-orphan")
+
+    def __repr__(self):
+        return f'<Achievement {self.name}>'
+    
+class UserAchievement(Base):
+    # Достижения пользователя
+    __tablename__ = "user_achievements"
+
+    # Колонки
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="cascade"), nullable=False, index=True)
+    achievement_id = Column(Integer, ForeignKey("achievement.id", ondelete="cascade"), nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    # Отношения
+    user = relationship("User", back_populates="achievements")
+    achievement = relationship("Achievement", back_populates="user_achievement")
+
+    __table_args__ = (
+        Index("ix_user_achievement_user_achievement", "achievement_id", unique=True)
+    )
+
+    def __repr__(self):
+        return f'<UserAchievement {self.achievement.name}>'
+    
+
+class UserStats(Base):
+    # Статистика пользователя
+    __tablename__ = "user_stats"
+
+    # Колонки
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="cascade"), nullable=False, unique=True, index=True)
+    guides_read = Column(Integer, nullable=False, default=0)
+    problem_solved = Column(Integer, nullable=False, default=0)
+    days_active = Column(Integer, nullable=False, default=0)
+    longest_streak = Column(Integer, nullable=False, default=0)
+    current_streak = Column(Integer, nullable=False, default=0)
+    last_activity_date = Column(Date, server_default=func.current_date())
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+    # Отношения
+    user = relationship("User", backref="stats")
+
+    def __repr__(self):
+        return f'<UserStats user_id={self.users_id}>'

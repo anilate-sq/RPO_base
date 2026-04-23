@@ -4,10 +4,10 @@ import random
 from typing import Dict, List, Optional
 from datetime import datetime
 from sqlalchemy.orm import Session
-from app.core.models import Problem, ActionOption, UserProblemHistory, ProblemStatus
+from app.core.models import Problem, ActionOption, UserProblemHistory, ProblemStatus, ProblemType
 
 # Получение активных проблем
-def get_active_problem(db: Session, user_id: int) -> List[Dict]:
+def get_active_problems(db: Session, user_id: int) -> List[Dict]:
     problems = (
         db.query(Problem)
         .filter(Problem.user_id == user_id, Problem.status == ProblemStatus.активная)
@@ -95,5 +95,16 @@ def resolve_problem(
         "problem_id": problem_id
     }
 
-def create_problem():
-    pass
+# Создание проблемы
+def create_problem(db, user_id: int, title: str, description: str = "", priority: int = 5, p_type: str = "регулярная") -> Problem:
+    problem = Problem(
+        user_id=user_id,
+        title=title,
+        description=description,
+        priority=max(1, min(10, priority)),
+        problem_type=ProblemType[p_type] if p_type in ProblemType.__members__ else ProblemType.регулярная       
+    )
+    db.add(problem)
+    db.commit()
+    db.refresh(problem)
+    return problem

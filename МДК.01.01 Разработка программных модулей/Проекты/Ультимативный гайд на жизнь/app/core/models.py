@@ -13,7 +13,6 @@ import enum
 from app.core.database import Base
 
 # Enum на русском из дампа
-
 class GuideStatus(enum.Enum):
     __tablename__ = "guide_status"
     черновик = "черновик"

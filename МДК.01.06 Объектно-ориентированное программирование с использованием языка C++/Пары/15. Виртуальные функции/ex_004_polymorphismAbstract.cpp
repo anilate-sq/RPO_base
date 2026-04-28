@@ -45,5 +45,5 @@ int main(){
     FileLogger file;
     process_logs(&file);
 
-    cout << endl << "Logger  - абстрактный класс. Его можно только наследовать" endl;
+    cout << endl << "Logger  - абстрактный класс. Его можно только наследовать" << endl;
 }

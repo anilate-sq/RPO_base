@@ -1,7 +1,7 @@
 # Подключение к БД
 
 from sqlalchemy import create_engine
-from sqlalchemy import sessionmaker, Session
+from sqlalchemy.orm import sessionmaker, Session, declarative_base
 from contextlib import contextmanager
 
 from app.config import DATABASE_URL

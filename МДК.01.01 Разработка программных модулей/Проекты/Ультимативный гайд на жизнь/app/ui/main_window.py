@@ -1,0 +1,112 @@
+# Главное окно
+
+from PySide6.QtWidgets import(
+    QMainWindow, QWidget, QHBoxLayout, QVBoxLayout, QListWidget, QListWidgetItem,
+    QStackedWidget, QLabel
+)
+from PySide6.QtCore import Qt, QSize
+from PySide6.QtGui import QFont
+from app.ui.styles import MAIN_STYLES
+
+# Безопасная загрузка
+try:
+    from app.ui.screens.home_screen import HomeScreen
+except ImportError:
+    HomeScreen = None
+
+class MainWindow(QMainWindow):
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("Пушка")
+        self.setMinimumSize(1280, 800)
+
+        self.styleSheet(MAIN_STYLES)
+        self._setup_ui()
+
+    def _setup_ui(self):
+        central_widget = QWidget()
+        self.setCentralWidget(self.centralWidget)
+
+        # Главный layout
+        main_layout = QHBoxLayout(central_widget)
+        main_layout.setSpacing(0)
+        main_layout.setContentsMargins(0, 0, 0, 0)
+
+        # Сайдбар
+        self.sidebar = self._create_sidebar()
+        main_layout.addWidget(self.sidebar)
+
+        # Стек контента
+        self.content_stack = QStackedWidget()
+        self.content_stack.setObjectName("contentStack")
+        main_layout.addWidget(self.content_stack, 1)
+
+        self._init_screens()
+
+    def _create_sidebar(self) -> QListWidget:
+        # Создание сайдбара
+        sidebar = QListWidget()
+        sidebar.setObjectName('sidebar')
+        sidebar.setFixedWidth(250)
+        sidebar.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        sidebar.setSelectionMode(QListWidget.SingleSection)
+        sidebar.setFocusPolicy(Qt.ClickFocus)
+
+        def add_item(text, is_clickable: bool = True, size_hint: QSize = None, font_size: int = 12):
+            item = QListWidgetItem(text)
+            item.setTextAlignment(Qt.AlignCenter)
+            if size_hint:
+                item.setSizeHint(size_hint)
+            item.setFont(QFont("Helvetica", font_size, QFont.Bold if font_size > 13 else QFont.Normal))
+            if not is_clickable:
+                item.setFlags(item.flags() & ~Qt.ItemSelectable & ~Qt.ItemEnable)
+            sidebar.addItem(item)
+            return item
+        
+        add_item('ЗАПАХ\nУСПЕХА', False, QSize(250, 60), 14)
+        add_item("-"*30, False, QSize(250,10), 10)
+
+        menu_map = [
+            ("Главная", 0),
+            ("Гайды", 1),
+            ("Проблемы", 2),
+            ("Навыки", 3),
+            ("Статистика", 4),
+            ("Достижения", 5)
+        ]
+        for text, stack_idx in menu_map:
+            item = add_item(text, True, QSize(250, 45), 12)
+            item.setData(Qt.UserRole, stack_idx)
+
+            add_item("-"*30, False, QSize(250, 10), 10)
+
+        ## Дописать
+
+        sidebar.currentRowChanged.connect(self._on_sidebar_clicked)
+        sidebar.setCurrentRow(2)
+
+        return sidebar
+
+    def _init_screens(self):
+        self.content_stack.addWidget(HomeScreen() if HomeScreen else self._placeholder['Главная'])
+        self.content_stack.addWidget(self._placeholder("Гайды"))
+        self.content_stack.addWidget(self._placeholder("Проблемы"))
+        self.content_stack.addWidget(self._placeholder("Навыки"))
+        self.content_stack.addWidget(self._placeholder("Статистика"))
+        self.content_stack.addWidget(self._placeholder("Достажения"))
+
+    def _placeholder(self, title: str) -> QWidget:
+        widget = QWidget()
+        layout = QVBoxLayout(widget)
+        layout.setAlignment(Qt.AlignCenter)
+
+        lbl = QLabel(title)
+        lbl.setObjectName("titleLabel")
+        lbl.setStyleSheet("font-size: 32px;")
+        layout.addWidget(lbl)
+
+        sub = QLabel("В разработке ...")
+        sub.setObjectName("subtitleLabel")
+        layout.addWidget(sub)
+
+        return widget

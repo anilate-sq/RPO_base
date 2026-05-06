@@ -110,3 +110,12 @@ class MainWindow(QMainWindow):
         layout.addWidget(sub)
 
         return widget
+    
+    def _on_click(self, row):
+        if row == -1 or not hasattr(self, 'sidebar'): return
+        item = self.sidebar.item(row)
+        if not item: return
+        
+    def update_sidebar_stats(self, bal, eng, stress):
+        if hasattr(self, 'stats_ref'):
+            self.stats_ref.setText(f'{bal:.0f} руб.\n{eng}% {stress}%')

@@ -30,7 +30,7 @@ class HomeScreen(QWidget):
 
         self.problems_title = QLabel("Активные проблемы", objectName="titleLabel")
         self.problems_title.setStyleSheet("font-size: 20px; margin-top: 10px;")
-        self.content_layout.addWidget(self.problem_title)
+        self.content_layout.addWidget(self.problems_title)
 
         self.problem_container = QVBoxLayout()
         self.problem_container.setSpacing(12)
@@ -58,7 +58,7 @@ class HomeScreen(QWidget):
             if not problems:
                 empty = QLabel("Нет активных проблем, зачилься")
                 empty.setObjectName("subtitleLabel")
-                self.problems_container.addWidget(empty)
+                self.problem_container.addWidget(empty)
             else:
                 for p in problems:
                     self._add_problem_card(p)

@@ -7,6 +7,7 @@ from PySide6.QtWidgets import(
 from PySide6.QtCore import Qt, QSize
 from PySide6.QtGui import QFont
 from app.ui.styles import MAIN_STYLES
+from app.ui.dialogs.add_proble_dialog import AddProblemDialog
 
 # Безопасная загрузка
 try:
@@ -20,12 +21,12 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("Пушка")
         self.setMinimumSize(1280, 800)
 
-        self.styleSheet(MAIN_STYLES)
+        self.setStyleSheet(MAIN_STYLES)
         self._setup_ui()
 
     def _setup_ui(self):
         central_widget = QWidget()
-        self.setCentralWidget(self.centralWidget)
+        self.setCentralWidget(central_widget)
 
         # Главный layout
         main_layout = QHBoxLayout(central_widget)
@@ -49,7 +50,7 @@ class MainWindow(QMainWindow):
         sidebar.setObjectName('sidebar')
         sidebar.setFixedWidth(250)
         sidebar.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        sidebar.setSelectionMode(QListWidget.SingleSection)
+        sidebar.setSelectionMode(QListWidget.SingleSelection)
         sidebar.setFocusPolicy(Qt.ClickFocus)
 
         def add_item(text, is_clickable: bool = True, size_hint: QSize = None, font_size: int = 12):
@@ -59,12 +60,11 @@ class MainWindow(QMainWindow):
                 item.setSizeHint(size_hint)
             item.setFont(QFont("Helvetica", font_size, QFont.Bold if font_size > 13 else QFont.Normal))
             if not is_clickable:
-                item.setFlags(item.flags() & ~Qt.ItemSelectable & ~Qt.ItemEnable)
+                item.setFlags(item.flags() & ~Qt.ItemIsSelectable & ~Qt.ItemIsEnabled)
             sidebar.addItem(item)
             return item
         
         add_item('ЗАПАХ\nУСПЕХА', False, QSize(250, 60), 14)
-        add_item("-"*30, False, QSize(250,10), 10)
 
         menu_map = [
             ("Главная", 0),
@@ -78,17 +78,15 @@ class MainWindow(QMainWindow):
             item = add_item(text, True, QSize(250, 45), 12)
             item.setData(Qt.UserRole, stack_idx)
 
-            add_item("-"*30, False, QSize(250, 10), 10)
-
         ## Дописать
 
-        sidebar.currentRowChanged.connect(self._on_sidebar_clicked)
+        sidebar.currentRowChanged.connect(self._on_click)
         sidebar.setCurrentRow(2)
 
         return sidebar
 
     def _init_screens(self):
-        self.content_stack.addWidget(HomeScreen() if HomeScreen else self._placeholder['Главная'])
+        self.content_stack.addWidget(HomeScreen() if HomeScreen else self._placeholder('Главная'))
         self.content_stack.addWidget(self._placeholder("Гайды"))
         self.content_stack.addWidget(self._placeholder("Проблемы"))
         self.content_stack.addWidget(self._placeholder("Навыки"))
@@ -115,6 +113,17 @@ class MainWindow(QMainWindow):
         if row == -1 or not hasattr(self, 'sidebar'): return
         item = self.sidebar.item(row)
         if not item: return
+        target = item.data(Qt.UserRole)
+
+        if isinstance(target, int) and 0 <= target < self.content_stack.count():
+            self.content_stack.setCurrentIndex(target)
+
+        elif target == "add":
+            dlg = AddProblemDialog(self)
+            if dlg.exec():
+                for i in range(self.content_stack.count()):
+                    w = self.content_stack.widget(i)
+                    if hasattr(w, 'refresh'): w.refresh()
         
     def update_sidebar_stats(self, bal, eng, stress):
         if hasattr(self, 'stats_ref'):

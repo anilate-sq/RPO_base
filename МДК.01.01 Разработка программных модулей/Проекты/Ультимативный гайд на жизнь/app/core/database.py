@@ -6,6 +6,8 @@ from contextlib import contextmanager
 
 from app.config import DATABASE_URL
 
+Base = declarative_base() # Подгружаем базовый шаблон модели
+
 engine = create_engine(
     DATABASE_URL,
     pool_pre_ping=True,

@@ -3,7 +3,7 @@
 from typing import Dict, List, Optional
 from sqlalchemy.orm import Session
 from app.core.models import Guide, GuideProgress, UserSkill, Skill
-from app.service import user_service
+from app.services import user_service
 
 # Получение актуальных гайдов 
 def get_guides(db: Session, section_id: Optional[int] = None) -> List[Dict]:

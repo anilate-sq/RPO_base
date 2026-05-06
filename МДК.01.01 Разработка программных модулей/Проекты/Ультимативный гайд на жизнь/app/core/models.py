@@ -64,9 +64,9 @@ class User(Base):
     # Relationships
     problems = relationship("Problem", back_populates="user", cascade="all, delete-orphan")
     skills = relationship("UserSkill", back_populates="user", cascade="all, delete-orphan")
-    achievements = relationship("UserAchievements", back_populates="user", cascade="add, delete-orphan")
-    guide_progress = relationship("GuideProgress", back_populates="user", cascade="add, delete-orphan")
-    problem_history = relationship("UserProblemHistory", back_populates="user", cascade="add, delete-orphan")
+    achievements = relationship("UserAchievement", back_populates="user", cascade="all, delete-orphan")
+    guide_progress = relationship("GuideProgress", back_populates="user", cascade="all, delete-orphan")
+    problem_history = relationship("UserProblemHistory", back_populates="user", cascade="all, delete-orphan")
     authored_sections = relationship("Section", back_populates="author")
     authored_guides = relationship("Guide", back_populates="author")
     
@@ -86,7 +86,7 @@ class Section(Base):
     sort_order = Column(Integer, nullable=False, default=0, index=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
-    author = Column(Integer, ForeignKey("users.id", ondelete="set null"))
+    author_id = Column(Integer, ForeignKey("users.id", ondelete="set null"))
 
     # Relationships
     guides = relationship("Guide", back_populates="section", cascade="all, delete-orphan")
@@ -101,7 +101,7 @@ class Guide(Base):
 
     # Columns
     id = Column(Integer, primary_key=True, autoincrement = True)
-    section_id = Column(Integer, ForeignKey('section.id', ondelete='cascade'), nullable=False, index=True)
+    section_id = Column(Integer, ForeignKey('sections.id', ondelete='cascade'), nullable=False, index=True)
     title = Column(String(245), nullable=False)
     short_description = Column(String(500))
     content = Column(JSON, nullable=False)
@@ -125,7 +125,7 @@ class Guide(Base):
     
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
-    author = Column(Integer, ForeignKey('users.id', ondelete='set null'))
+    author_id = Column(Integer, ForeignKey('users.id', ondelete='set null'))
 
     # Relationships
     section = relationship('Section', back_populates='guides')
@@ -175,9 +175,9 @@ class UserSkill(Base):
     user = relationship("User", back_populates="skills")
     skill = relationship("Skill", back_populates="user_skills")
 
-    __table_args__ = {
+    __table_args__ = (
         Index('ix_user_skills_user_skill', 'user_id', 'skill_id', unique=True),
-    }
+    )
 
     def __repr__(self):
         return f'<UserSkill {self.skill.name} - lvl {self.level}'
@@ -217,7 +217,7 @@ class Problem(Base):
     history = relationship("UserProblemHistory", back_populates="problem", cascade="all, delete-orphan")
     
     __table_args__ = (
-        CheckConstraint("priority >= 1 AND priority <= 5", name="check_priority_range")
+        CheckConstraint("priority >= 1 AND priority <= 5", name="check_priority_range"),
     )
 
     def __repr__(self):
@@ -243,7 +243,7 @@ class ActionOption(Base):
     problem = relationship("Problem", back_populates="action_options")
 
     __table_args__ = (
-        CheckConstraint("success_chance >= 0 AND success_chance <= 100", name="check_success_chance")
+        CheckConstraint("success_chance >= 0 AND success_chance <= 100", name="check_success_chance"),
     )
 
     def __repr__(self):
@@ -256,8 +256,8 @@ class UserProblemHistory(Base):
     # Колонки
     id = Column(Integer, primary_key=True, autoincrement=True)
     user_id = Column(Integer, ForeignKey("users.id", ondelete="cascade"), nullable=False, index=True)
-    problem_id = Column(Integer, ForeignKey("problems.id", ondelete="cascade", nullable=False, index=True))
-    action_id = Column(Integer, ForeignKey("actions_options.id", ondelete="restrict", nullable=False))
+    problem_id = Column(Integer, ForeignKey("problems.id", ondelete="cascade"), nullable=False, index=True)
+    action_id = Column(Integer, ForeignKey("actions_options.id", ondelete="restrict"), nullable=False)
     was_successful = Column(Boolean, nullable=False, default=True)
     stress_change = Column(Integer)
     energy_change = Column(Integer)
@@ -314,7 +314,7 @@ class Achievement(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     # Отношения
-    user_achievements = relationship("UserAchievement", back_populates="achievements", cascade="all, delete-orphan")
+    user_achievements = relationship("UserAchievement", back_populates="achievement", cascade="all, delete-orphan")
 
     def __repr__(self):
         return f'<Achievement {self.name}>'
@@ -326,15 +326,15 @@ class UserAchievement(Base):
     # Колонки
     id = Column(Integer, primary_key=True, autoincrement=True)
     user_id = Column(Integer, ForeignKey("users.id", ondelete="cascade"), nullable=False, index=True)
-    achievement_id = Column(Integer, ForeignKey("achievement.id", ondelete="cascade"), nullable=False)
+    achievement_id = Column(Integer, ForeignKey("achievements.id", ondelete="cascade"), nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     # Отношения
     user = relationship("User", back_populates="achievements")
-    achievement = relationship("Achievement", back_populates="user_achievement")
+    achievement = relationship("Achievement", back_populates="user_achievements")
 
     __table_args__ = (
-        Index("ix_user_achievement_user_achievement", "achievement_id", unique=True)
+        Index("ix_user_achievement_user_achievement", "achievement_id", unique=True),
     )
 
     def __repr__(self):

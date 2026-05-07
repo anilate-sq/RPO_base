@@ -7,13 +7,15 @@ from PySide6.QtWidgets import(
 from PySide6.QtCore import Qt, QSize
 from PySide6.QtGui import QFont
 from app.ui.styles import MAIN_STYLES
-from app.ui.dialogs.add_proble_dialog import AddProblemDialog
+from app.ui.dialogs.add_problem_dialog import AddProblemDialog
 
 # Безопасная загрузка
-try:
-    from app.ui.screens.home_screen import HomeScreen
-except ImportError:
-    HomeScreen = None
+try: from app.ui.screens.home_screen import HomeScreen
+except ImportError: HomeScreen = None
+try: from app.ui.screens.problems_screen import ProblemsScreen
+except: ProblemsScreen = None
+try: from app.ui.screens.profile_screen import ProfileScreen
+except: ProfileScreen = None
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -78,7 +80,7 @@ class MainWindow(QMainWindow):
             item = add_item(text, True, QSize(250, 45), 12)
             item.setData(Qt.UserRole, stack_idx)
 
-        ## Дописать
+        add_item("Добавить проблему").setData(Qt.UserRole, "add")
 
         sidebar.currentRowChanged.connect(self._on_click)
         sidebar.setCurrentRow(2)
@@ -88,10 +90,11 @@ class MainWindow(QMainWindow):
     def _init_screens(self):
         self.content_stack.addWidget(HomeScreen() if HomeScreen else self._placeholder('Главная'))
         self.content_stack.addWidget(self._placeholder("Гайды"))
-        self.content_stack.addWidget(self._placeholder("Проблемы"))
+        self.content_stack.addWidget(ProblemsScreen() if ProblemsScreen else self._placeholder("Проблемы"))
         self.content_stack.addWidget(self._placeholder("Навыки"))
         self.content_stack.addWidget(self._placeholder("Статистика"))
-        self.content_stack.addWidget(self._placeholder("Достажения"))
+        self.content_stack.addWidget(self._placeholder("Достижения"))
+        self.content_stack.addWidget(ProfileScreen() if ProfileScreen else self._placeholder("Достижения"))
 
     def _placeholder(self, title: str) -> QWidget:
         widget = QWidget()

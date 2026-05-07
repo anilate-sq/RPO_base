@@ -12,7 +12,7 @@ class ProfileScreen(QWidget):
         
     def init_ui(self):
         layout = QVBoxLayout(self)
-        layout.setContentMargins(30, 30, 30, 30)
+        layout.setContentsMargins(30, 30, 30, 30)
         self.container = QWidget()
         self.profile_layout = QVBoxLayout(self.container)
         layout.addWidget(self.container)

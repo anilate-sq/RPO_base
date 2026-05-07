@@ -217,7 +217,7 @@ class Problem(Base):
     history = relationship("UserProblemHistory", back_populates="problem", cascade="all, delete-orphan")
     
     __table_args__ = (
-        CheckConstraint("priority >= 1 AND priority <= 5", name="check_priority_range"),
+        CheckConstraint("priority >= 1 AND priority <= 10", name="check_priority_range"),
     )
 
     def __repr__(self):
@@ -232,6 +232,7 @@ class ActionOption(Base):
     problem_id = Column(Integer, ForeignKey("problems.id", ondelete="cascade"), nullable=False, index=True)
     title = Column(String(100), nullable=False)
     description = Column(Text)
+    balance_change = Column(Integer, default=0)
     stress_change = Column(Integer, default=0)
     energy_change = Column(Integer, default=0)
     xp_reward = Column(Integer, default=0)

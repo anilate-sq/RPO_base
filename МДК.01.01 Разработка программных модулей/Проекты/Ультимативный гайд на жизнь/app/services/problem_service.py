@@ -7,21 +7,32 @@ from sqlalchemy.orm import Session
 from app.core.models import Problem, ActionOption, UserProblemHistory, ProblemStatus, ProblemType
 
 # Получение активных проблем
-def get_active_problems(db: Session, user_id: int) -> List[Dict]:
-    problems = (
-        db.query(Problem)
-        .filter(Problem.user_id == user_id, Problem.status == ProblemStatus.активная)
-        .order_by(Problem.priority.desc(), Problem.created_at.desc())
-        .all()
-    )
+def get_active_problems(db: Session, user_id: int, status_filter: str = "active") -> List[Dict]:
+    status_map = {
+        "active": ProblemStatus.активная,
+        "resolved": ProblemStatus.разрешенная,
+        "all": None
+    }
+    query = db.query(Problem).filter(Problem.user_id == user_id)
+
+    target_status = status_map.get(status_filter)
+    if target_status is not None:
+        query = query.filter(Problem.status == target_status)
+    
+    if status_filter == "urgent":
+        query = query.filter(Problem.priority >= 7)
+
+    problems = query.order_by(Problem.priority.desc(), Problem.created_at.desc()).all()
+
     return [
         {
             "id": p.id,
             "title": p.title,
             "description": p.description,
             "priority": p.priority,
-            "type": p.problem_type.value,
-            "created_at": p.created_at.isoformat(),
+            "status": p.status.value if hasattr(p.status, 'value') else p.status,
+            "type": p.problem_type.value if hasattr(p.problem_type, 'value') else p.problem_type,
+            "created_at": p.created_at.isoformat() if p.created_at else None,
             "actions": [{
                 "id": a.id,
                 "title": a.title,

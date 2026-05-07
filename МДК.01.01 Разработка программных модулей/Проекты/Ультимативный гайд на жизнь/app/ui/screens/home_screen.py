@@ -4,6 +4,7 @@ from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QScrollArea, QG
 from PySide6.QtCore import Qt
 from app.core.database import SessionLocal
 from app.services import user_service, problem_service
+from app.ui.dialogs.resolve_problem_dialog import ResolveProblemDialog
 
 class HomeScreen(QWidget):
     def __init__(self):
@@ -92,7 +93,7 @@ class HomeScreen(QWidget):
 
         left = QVBoxLayout()
         left.addWidget(QLabel(f'[{problem['priority']}/10] {problem['title']}', objectName="titleLabel"))
-        left.addWidget(QLabel(problem('description'), objectName="subtitleLabel"))
+        left.addWidget(QLabel(problem['description'], objectName="subtitleLabel"))
 
         btn = QPushButton("Решить", objectName="successButton")
         btn.setFixedWidth(100)
@@ -105,3 +106,30 @@ class HomeScreen(QWidget):
 
     def _resolve_problem(self, problem):
         print(f'Открываем выбор действий для {problem['title']}')
+        dialog = ResolveProblemDialog(problem, parent=self)
+        dialog.problemResolved.connect(self._on_problem_resolved)
+        if dialog.exec():
+            self.refresh()
+    
+    def _on_problem_resolved(self, changes: dict):
+        parent_window = self.window()
+        if hasattr(parent_window, 'update_sidebar_stats'):
+            from app.core.database import SessionLocal
+            from app.services import user_service
+            db = SessionLocal()
+            try:
+                profile = user_service.get_user_profile(db, 1)
+                if profile:
+                    parent_window.update_sidebar_stats(
+                        profile['balance'],
+                        profile['energy'],
+                        profile['stress_level']
+                    )
+            finally:
+                db.close()
+    
+    def _open_add_dialog(self):
+        from app.ui.dialogs.add_problem_dialog import AddProblemDialog
+        dlg = AddProblemDialog(self)
+        if dlg.exec():
+            self.refresh()

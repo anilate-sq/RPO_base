@@ -27,7 +27,7 @@ class AddProblemDialog(QDialog):
         prio_layout = QHBoxLayout()
         prio_layout.addWidget(QLabel("Приоритет (1-10):"))
         self.prio_spin = QSpinBox()
-        self.prio_spin.setRanger(1,10); self.prio_spin.setValue(5)
+        self.prio_spin.setRange(1,10); self.prio_spin.setValue(5)
         prio_layout.addWidget(self.prio_spin)
 
         type_layout = QHBoxLayout()
@@ -46,9 +46,9 @@ class AddProblemDialog(QDialog):
 
         layout.addWidget(self.title_input)
         layout.addWidget(self.desc_input)
-        layout.addWidget(prio_layout)
-        layout.addWidget(type_layout)
-        layout.addWidget(btn_layout)
+        layout.addLayout(prio_layout)
+        layout.addLayout(type_layout)
+        layout.addLayout(btn_layout)
 
     # Отправка формы
     def _submit(self):

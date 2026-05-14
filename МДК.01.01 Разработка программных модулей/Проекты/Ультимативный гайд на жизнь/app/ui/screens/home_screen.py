@@ -94,13 +94,15 @@ class HomeScreen(QWidget):
         left = QVBoxLayout()
         left.addWidget(QLabel(f'[{problem['priority']}/10] {problem['title']}', objectName="titleLabel"))
         left.addWidget(QLabel(problem['description'], objectName="subtitleLabel"))
+        
+        user_role = user_service.get_user_role()
+        if user_role == 1:
+            btn = QPushButton("Решить", objectName="successButton")
+            btn.setFixedWidth(100)
+            btn.clicked.connect(lambda _, p=problem: self._resolve_problem(p))
 
-        btn = QPushButton("Решить", objectName="successButton")
-        btn.setFixedWidth(100)
-        btn.clicked.connect(lambda _, p=problem: self._resolve_problem(p))
-
+            layout.addWidget(btn)
         layout.addLayout(left, 1)
-        layout.addWidget(btn)
 
         self.problem_container.addWidget(card)
 

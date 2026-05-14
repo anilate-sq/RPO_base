@@ -84,6 +84,15 @@ def get_user_profile(db, user_id: int) -> Optional[dict]:
         "is_active": user.is_active
     }
 
+def get_user_role(db, user_id: int) -> Optional[dict]:
+    user = get_user_by_id(db, user_id)
+    if not user:
+        return None
+    
+    return{
+        "role_id": user.role_id
+    }
+
 # Получить навыки пользователя
 def get_user_skills(db, user_id: id) -> list:
     user_skills = db.query(UserSkill).filter(UserSkill.user_id == user_id).all()

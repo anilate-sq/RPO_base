@@ -1,17 +1,19 @@
-# Сервис для работы с гайдами и прогрессом
-
+"""
+Сервис для работы с гайдами и прогрессом
+"""
 from typing import Dict, List, Optional
+from datetime import datetime
 from sqlalchemy.orm import Session
-from app.core.models import Guide, GuideProgress, UserSkill, Skill
+from app.core.models import Guide, GuideProgress, UserSkill, Skill, GuideStatus  # ← добавил GuideStatus
 from app.services import user_service
 
-# Получение актуальных гайдов 
+# Получение актуальных гайдов
 def get_guides(db: Session, section_id: Optional[int] = None) -> List[Dict]:
-    query = db.query(Guide).filter(Guide.status == "актуальный")
+    query = db.query(Guide).filter(Guide.status == GuideStatus.актуальный)
     if section_id:
         query = query.filter(Guide.section_id == section_id)
     guides = query.all()
-    return[
+    return [
         {
             "id": g.id,
             "title": g.title,
@@ -26,16 +28,17 @@ def get_guides(db: Session, section_id: Optional[int] = None) -> List[Dict]:
     ]
 
 # Получение прогресса пользователя по гайду
-def get_progress(db, user_id: int, guide_id) -> Optional[Dict]:
+def get_progress(db: Session, user_id: int, guide_id: int) -> Optional[Dict]:
     progress = db.query(GuideProgress).filter_by(user_id=user_id, guide_id=guide_id).first()
     if not progress:
         return None
-    return{
+    return {
         "guide_id": progress.guide_id,
         "status": progress.status,
         "progress_percent": progress.progress_percent,
         "end_at": progress.end_at.isoformat() if progress.end_at else None
     }
+
 # Обновление прогресса
 def update_progress(db: Session, user_id: int, guide_id: int, percent: int) -> GuideProgress:
     progress = db.query(GuideProgress).filter_by(user_id=user_id, guide_id=guide_id).first()
@@ -46,7 +49,6 @@ def update_progress(db: Session, user_id: int, guide_id: int, percent: int) -> G
     progress.progress_percent = max(0, min(100, percent))
     progress.status = "завершено" if percent >= 100 else "в процессе"
     if percent >= 100 and not progress.end_at:
-        from datetime import datetime
         progress.end_at = datetime.now()
 
     db.commit()
@@ -57,10 +59,13 @@ def update_progress(db: Session, user_id: int, guide_id: int, percent: int) -> G
 def complete_guide(db: Session, user_id: int, guide_id: int) -> Dict:
     guide = db.get(Guide, guide_id)
     progress = db.query(GuideProgress).filter_by(user_id=user_id, guide_id=guide_id).first()
-    if not guide or not progress or progress.progress_percent < 100:
+    
+    if not guide:
+        raise ValueError("Гайд не найден")
+    if not progress or progress.progress_percent < 100:
         raise ValueError("Гайд не завершен")
     
-    if progress.status == "награда получена":
+    if progress.status == "награда_получена":
         return {"rewarded": False, "message": "Награда уже получена"}
     
     user_service.update_user_state(db, user_id, experience=guide.xp_reward)
@@ -87,7 +92,7 @@ def complete_guide(db: Session, user_id: int, guide_id: int) -> Dict:
     progress.status = "награда_получена"
     db.commit()
 
-    return{
+    return {
         "rewarded": True,
         "xp_earned": guide.xp_reward,
         "skill_updated": skill_rewards

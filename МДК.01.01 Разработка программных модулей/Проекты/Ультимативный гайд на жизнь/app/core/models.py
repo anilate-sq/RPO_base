@@ -14,25 +14,21 @@ from app.core.database import Base
 
 # Enum на русском из дампа
 class GuideStatus(enum.Enum):
-    __tablename__ = "guide_status"
     черновик = "черновик"
     актуальный = "актуальный"
     архивный = "архивный"
 
 class ProblemType(enum.Enum):
-    __tablename__ = "promlem_type"
     срочная = "срочная" 
     регулярная = "регулярная" 
     длительная = "длительная"
 
 class ProblemStatus(enum.Enum):
-    __tablename__ = "problem_status"
     активная = "активная"
     разрешенная = "разрешенная"
     отозванная = "отозванная"
 
 class SkillCategory(enum.Enum):
-    __tablename__ = "skill_category"
     жизненные = "жизненные"
     профессиональные = "профессиональные"
     здоровье = "здоровье"
@@ -70,7 +66,7 @@ class User(Base):
     authored_sections = relationship("Section", back_populates="author")
     authored_guides = relationship("Guide", back_populates="author")
     
-    def __repr_(self):
+    def __repr__(self):
         return f'<User {self.username} (lvl {self.level})>'
     
 class Section(Base):
@@ -335,7 +331,7 @@ class UserAchievement(Base):
     achievement = relationship("Achievement", back_populates="user_achievements")
 
     __table_args__ = (
-        Index("ix_user_achievement_user_achievement", "achievement_id", unique=True),
+        Index("ix_user_achievement_unique", "user_id", "achievement_id", unique=True),
     )
 
     def __repr__(self):
